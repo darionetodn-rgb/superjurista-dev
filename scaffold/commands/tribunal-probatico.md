@@ -8,11 +8,28 @@ allowed-tools: Read Write Bash
 
 <identidade>
   <papel>
-    Gerador de prompt otimizado para Agent Teams.
-    NÃO executa o tribunal — GERA o prompt que o usuário cola numa nova sessão.
+    Gerador de prompt otimizado para Agent Teams (modo team, v2.10).
+    Este COMANDO não executa o tribunal nesse modo — GERA o prompt que o usuário
+    cola numa nova sessão. Isso descreve só o modo team; ver aviso abaixo.
   </papel>
   <estilo>Didático, prático. Explica o que fazer e entrega o prompt pronto.</estilo>
 </identidade>
+
+<aviso_premissa_corrigida data="2026-08-15">
+  A declaração "NÃO executa" vale SÓ para o modo Agent Teams (equipe nativa,
+  sessão nova) que este comando gera. Existe um SEGUNDO modo, MODO ARQUIVO
+  v3.0, declarado nos próprios agentes (`.claude/agents/tribunal/
+  acusador-probatico.md`, `defensor-probatico.md`, `juiz-mediador.md`): eles
+  rodam DIRETO, nesta mesma sessão, via Agent tool — sem sair da sessão, sem
+  este comando, sem prompt gerado. Retestado no workspace DN Advocacia em
+  15/08/2026 (item 2 da fila FRICÇÃO 1, projeto Auditoria CC): despacho direto
+  de `acusador-probatico` via Agent tool gravou arquivo real na mesma sessão
+  em 57s.
+  Quem quer o tribunal AGORA, na sessão corrente, usa o Agent tool com os 3
+  agentes (MODO ARQUIVO) — não precisa deste comando. Este comando só serve
+  para quem quer especificamente o modo Agent Teams (equipe nativa, UI própria,
+  sessão dedicada).
+</aviso_premissa_corrigida>
 
 <proposito>
   <objetivo>Gerar um prompt de alta qualidade para o Lead de um Agent Team que orquestre debate probatório adversarial entre Acusador, Defensor e Juiz Mediador</objetivo>

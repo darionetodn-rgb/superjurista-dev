@@ -32,7 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ├── agents/             # SUBAGENTES por categoria
 │   ├── extracao/       # linha-tempo, relator, seletor-documentos, super-conversor
 │   ├── analise/        # marmelstein, haack, pearl, embargos, hootly, probatica
-│   ├── pesquisa/       # bnp, cjf, julia, consolidador
+│   ├── pesquisa/       # bnp, cjf, carf, stj, tnu, consolidador
 │   ├── redacao/        # redator-minuta-robustecida
 │   ├── revisao/        # verificadores (calculos, honorarios, remessa, fontes)
 │   └── lista-trf/      # agentes para análise de listas de julgamento
@@ -71,7 +71,7 @@ data/                   # SAÍDAS DO SISTEMA — o ÚNICO destino canônico de s
 | `/pipeline-sentenca` | Pipeline completo de sentença (6 etapas) |
 | `/pipeline-sentenca-team` | Versão com Agent Teams (pesquisa paralela) |
 | `/pipeline-embargos` | Pipeline de embargos de declaração |
-| `/pipeline-pesquisa` | Pesquisa paralela em BNP, CJF e JULIA |
+| `/pipeline-pesquisa` | Pesquisa paralela em BNP, CJF, CARF, STJ e TNU |
 | `/pipeline-probatica` | Análise probabilística de provas (Haack/Pearl) |
 | `/pipeline-minutar-pdf` | PDF para sentença completa |
 | `/pipeline-revisao-minuta` | Revisão e validação final |
@@ -139,10 +139,10 @@ pip install requests beautifulsoup4 pdfplumber PyPDF2 pdf2image pytesseract
 | `tcu-jurisprudencia` | TCU — 3 bases (acórdão, jurisprudência, norma) | Ver `listar_bases_tcu` |
 | `tjsc-eproc` | Jurisprudência do TJSC (eProc) | `termo ou nao prox "frase" *wildcard` (case-insensitive) |
 | `tnu-eproc` | TNU viva (eProc), com inteiro teor por id | `termo e ou nao prox "frase" *wildcard` (minúsculo; `prox` SEM número) |
-| `julia-trf5` | Sistema JULIA do TRF5 (não incluído no scaffold — requer credenciais) | `termo e ou nao prox adj $` (minúsculo) |
+| `carf-jurisprudencia` | Jurisprudência administrativa CARF/CSRF (adaptação DN 06/08/2026 — JULIA/TRF5 fora, o titular não atua no TRF5) | espaço entre termos = E; OR/NOT em MAIÚSCULO |
 | `claude-in-chrome` | Automação browser (sessão PJE, login) | Controle nativo do navegador |
 
-Divisão de trabalho entre as bases: STF/STJ atuais → BNP; TRF5 → JULIA; TNU viva (com
+Divisão de trabalho entre as bases: STF/STJ atuais → BNP; contencioso administrativo tributário → CARF; TNU viva (com
 inteiro teor) → tnu-eproc; TRFs/TRU e histórico STF-STJ → CJF unificada.
 
 ## Convenções
@@ -166,7 +166,7 @@ Cada etapa do pipeline tem sinalizadores obrigatórios para validação:
 
 ## Regras Invioláveis (Iron Laws)
 
-1. **Nenhuma citação sem verificação** - Se não verificou via BNP/CJF/JULIA, não cite
+1. **Nenhuma citação sem verificação** - Se não verificou via BNP/CJF/CARF, não cite
 2. **Nenhuma afirmação sem referência** - "Os autos indicam" exige página/documento
 3. **Nenhum dispositivo sem correspondência** - Cada pedido deve ser decidido
 4. **Nenhuma etapa sem contrato** - Sem schema, não há validação

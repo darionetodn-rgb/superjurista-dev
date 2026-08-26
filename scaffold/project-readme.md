@@ -4,7 +4,7 @@
 
 O SuperJurista e um sistema de inteligencia aumentada que auxilia magistrados e profissionais do Direito no processamento de demandas judiciais. Ele funciona como um assistente especializado dentro do Claude Code, capaz de ler processos, pesquisar precedentes, analisar provas e redigir minutas de sentenca -- tudo a partir de comandos simples.
 
-O sistema automatiza as tarefas mais repetitivas do trabalho judicial: extrair informacoes dos autos, organizar linhas do tempo, buscar jurisprudencia relevante em bancos como o BNP (STF/STJ), CJF e JULIA (TRF5), e produzir analises juridicas estruturadas. O que antes exigia horas de leitura e pesquisa pode ser feito em minutos.
+O sistema automatiza as tarefas mais repetitivas do trabalho judicial: extrair informacoes dos autos, organizar linhas do tempo, buscar jurisprudencia relevante em bancos como o BNP (STF/STJ), CJF e CARF (contencioso administrativo), e produzir analises juridicas estruturadas. O que antes exigia horas de leitura e pesquisa pode ser feito em minutos.
 
 E importante destacar: o SuperJurista assiste, nao substitui. O magistrado mantem o controle integral sobre o resultado. Toda minuta gerada e uma proposta que deve ser revisada, ajustada e validada pelo julgador antes de qualquer utilizacao. O sistema e uma ferramenta de apoio -- a decisao final e sempre humana.
 
@@ -76,7 +76,7 @@ Todos os comandos sao executados dentro do Claude Code, digitando `/` seguido do
 
 | Comando | O que faz | Exemplo de uso |
 |---------|-----------|----------------|
-| `/pipeline-pesquisa` | Pesquisa jurisprudencia em multiplos bancos (BNP, CJF, JULIA) simultaneamente | `/pipeline-pesquisa "dano moral overbooking transporte aereo"` |
+| `/pipeline-pesquisa` | Pesquisa jurisprudencia em multiplos bancos (BNP, CJF, CARF) simultaneamente | `/pipeline-pesquisa "dano moral overbooking transporte aereo"` |
 | `/planejamento-epistemico` | Monta um plano estruturado de pesquisa antes de executar as buscas | `/planejamento-epistemico "responsabilidade civil medica"` |
 
 ### Analise de provas

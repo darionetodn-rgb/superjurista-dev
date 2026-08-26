@@ -64,7 +64,7 @@ allowed-tools: Read Task Bash TodoWrite
     | linha-tempo-processual | 1 | .claude/agents/extracao/linha-tempo-processual.md |
     | relator-marmelstein | 2 | .claude/agents/extracao/relator-marmelstein.md |
     | triador-processual | 2.5 | .claude/agents/analise/triador-processual.md |
-    | pesquisador-bnp/cjf/julia/stj/tnu + consolidador-pesquisa | 2.6 (condicional) | .claude/agents/pesquisa/*.md |
+    | pesquisador-bnp/cjf/carf/stj/tnu + consolidador-pesquisa | 2.6 (condicional) | .claude/agents/pesquisa/*.md |
     | inventariador-probatica + probatica-pearl/haack/fbd + consolidador-probatica | 2.7 (condicional) | .claude/agents/analise/*.md |
     | analisador-marmelstein | 3 | .claude/agents/analise/analisador-marmelstein.md |
     | fundamentador-marmelstein | 4 | .claude/agents/analise/fundamentador-marmelstein.md |
@@ -108,7 +108,7 @@ allowed-tools: Read Task Bash TodoWrite
   <etapa_invalida>Gate acusa [AUSENTE]/[INVALIDA] após o despacho → redespachar a MESMA etapa com o motivo do gate anexado ao prompt (máx 2 tentativas; depois PARAR e reportar o output do gate ao usuário).</etapa_invalida>
   <falha_de_entrada>merge_sentenca.py acusa entrada inválida → o defeito é da etapa 2 ou 4, não do merge; voltar à etapa apontada.</falha_de_entrada>
   <rota_invalida>--rota sai com exit 1 (triagem sem bloco ```json, JSON malformado ou contrato C2 violado) → tratar a triagem como INVÁLIDA: redespachar o triador com a mensagem [ERRO] anexada (conta nas 2 tentativas da etapa).</rota_invalida>
-  <mcp_indisponivel_na_triagem>BNP/JULIA fora do ar durante o reconhecimento → quem trata é o PRÓPRIO triador (contingência do agente): aplica rota mínima ["pesquisa"] e registra a indisponibilidade em EVIDÊNCIAS. O orquestrador NÃO intervém — segue a rota gravada.</mcp_indisponivel_na_triagem>
+  <mcp_indisponivel_na_triagem>BNP/CARF fora do ar durante o reconhecimento → quem trata é o PRÓPRIO triador (contingência do agente): aplica rota mínima ["pesquisa"] e registra a indisponibilidade em EVIDÊNCIAS. O orquestrador NÃO intervém — segue a rota gravada.</mcp_indisponivel_na_triagem>
   <fonte_indisponivel_no_trilho>Pesquisador do trilho 2.6 falha 2 vezes (ou a Task reporta MCP desconectado — nesse caso SEM gastar as 2 tentativas) → registrar a fonte como INDISPONÍVEL e seguir, desde que ao menos 1 fonte tenha gate OK; o fechamento do trilho usa --etapas <subconjunto-ok>,consolidado --gate. TODAS as fontes indisponíveis → PARAR.</fonte_indisponivel_no_trilho>
   <escalar_trilho_ja_rodado>ESCALAR pede trilho que JÁ passa no gate dele (ainda que com tema novo) → NÃO re-rodar o trilho: redespachar a análise com [ESCALADA JÁ UTILIZADA] — conclua com os insumos disponíveis, registrando a limitação. É o comportamento ESPERADO — conservador, determinístico e visível ao humano (a limitação fica registrada na análise).</escalar_trilho_ja_rodado>
   <escalar_segunda_vez>Gate --etapa analise devolve exit 3 DE NOVO após redespacho com a marca [ESCALADA JÁ UTILIZADA] → tratar como INVALIDA e PARAR com o output do gate. O teto de 1 escalada por processo é INVIOLÁVEL.</escalar_segunda_vez>
@@ -205,7 +205,7 @@ allowed-tools: Read Task Bash TodoWrite
       VOCÊ É UM SUBAGENTE DE TRIAGEM. EXECUTE DIRETAMENTE, SEM PREÂMBULO.
       <passo>Read: .claude/agents/analise/triador-processual.md — sua capacidade; siga fielmente.</passo>
       <passo>Read: $WORKSPACE/$NUMERO-relatorio.md (questões jurídicas e pontos controvertidos).</passo>
-      <passo>Executar o reconhecimento do seu método (MÁXIMO 4 buscas curtas — BNP: +termo -termo "frase"; JULIA: operadores em minúsculo) e classificar cada ponto controvertido: resolve-se por TESE ou por PROVA?</passo>
+      <passo>Executar o reconhecimento do seu método (MÁXIMO 4 buscas curtas — BNP: +termo -termo "frase"; CARF: espaço entre termos já é E, OR/NOT em MAIÚSCULO) e classificar cada ponto controvertido: resolve-se por TESE ou por PROVA?</passo>
       <passo>GRAVAR (Write) a triagem COMPLETA em $WORKSPACE/$NUMERO-triagem.md — abrindo com "# Triagem Cognitiva do Processo", com as seções "## QUESTÕES IDENTIFICADAS" e "## EVIDÊNCIAS", exatamente UM bloco cercado ```json (rota, temas_pesquisa, fatos_probatorios, justificativa_rotina), fechando com "Triagem concluída.", em português COM acentos.</passo>
       <passo>GRAVAR (Write) $WORKSPACE/fontes-triagem.json — trecho_verbatim é cópia EXATA do que os MCPs retornaram; nada encontrado → {"fontes": []}.</passo>
       <passo>Responder APENAS: "triagem OK | $NUMERO-triagem.md" — NÃO imprimir os documentos.</passo>
@@ -236,9 +236,9 @@ allowed-tools: Read Task Bash TodoWrite
 
   <etapa numero="2.6" nome="Trilho de pesquisa (condicional) — SÓ SE 'pesquisa' na ROTA" modo="paralelo">
     <retomada>O trilho tem retomada PRÓPRIA, pelo gate do pipeline-pesquisa:
-      Bash: python scripts/verificar_pesquisa.py "$WORKSPACE" --etapas bnp,cjf,julia,consolidado
+      Bash: python scripts/verificar_pesquisa.py "$WORKSPACE" --etapas bnp,cjf,carf,consolidado
       → a linha PENDENTES é o plano DO TRILHO (sem --gate a varredura de subconjunto SEMPRE sai 0 — ela informa, não bloqueia).
-      STJ/TNU: incluir no subconjunto APENAS se os MCPs correspondentes estiverem conectados NESTA sessão (ferramentas mcp__claude_ai_PESQUISA_STJ__* e mcp__tnu-eproc__* disponíveis); se incluídos, usar o subconjunto ampliado bnp,cjf,julia,stj,tnu,consolidado em TODOS os comandos do trilho. Nada pendente → pular direto ao fechamento (passo 4).</retomada>
+      STJ/TNU: incluir no subconjunto APENAS se os MCPs correspondentes estiverem conectados NESTA sessão (ferramentas mcp__claude_ai_PESQUISA_STJ__* e mcp__tnu-eproc__* disponíveis); se incluídos, usar o subconjunto ampliado bnp,cjf,carf,stj,tnu,consolidado em TODOS os comandos do trilho. Nada pendente → pular direto ao fechamento (passo 4).</retomada>
     <acao_orquestrador>
       $TEMAS = as linhas "TEMA:" lidas na Etapa 2.5 (tema de pesquisa injetado nos envelopes).
       1. Task (sonnet) para CADA fonte pendente, em PARALELO no MESMO turno (exemplo BNP):
@@ -262,9 +262,10 @@ allowed-tools: Read Task Bash TodoWrite
         Sintaxe CJF: E OU NAO ADJ PROX (MAIÚSCULO); pesquise APENAS TRF1, TRF3, TRF4
         (tribunais="TRF1,TRF3,TRF4" — únicas bases vivas do CJF; STF/STJ/TRF5 têm fontes
         próprias); identifique divergências regionais.
-      - JULIA → .claude/agents/pesquisa/pesquisador-julia.md; $NUMERO-pesquisa-julia.md; fontes-julia.json;
-        abre "# Pesquisa JULIA", fecha "Pesquisa JULIA concluída.".
-        Sintaxe JULIA: e ou nao adj prox $ (minúsculo); analise por turma; verifique IRDRs vinculantes.
+      - CARF → .claude/agents/pesquisa/pesquisador-carf.md; $NUMERO-pesquisa-carf.md; fontes-carf.json;
+        abre "# Pesquisa CARF", fecha "Pesquisa CARF concluída.".
+        Sintaxe CARF (Lucene/Solr): espaço entre termos já é E; OR e NOT em MAIÚSCULO; aspas
+        para frase exata (adaptação DN 06/08/2026: JULIA/TRF5 fora — o titular não atua no TRF5).
       - STJ (só se no subconjunto) → .claude/agents/pesquisa/pesquisador-stj.md; $NUMERO-pesquisa-stj.md;
         fontes-stj.json; abre "# Pesquisa STJ", fecha "Pesquisa STJ concluída.".
         Sintaxe STJ: espaço é E implícito, ou nao "frase" termo* (sem parênteses); priorize
@@ -274,7 +275,7 @@ allowed-tools: Read Task Bash TodoWrite
         Sintaxe TNU: e ou nao prox * "frase" (prox SEM número); use somente_precedentes_relevantes
         para os representativos; foque uniformização/JEFs.
       2. Validar CADA fonte despachada:
-         Bash: python scripts/verificar_pesquisa.py "$WORKSPACE" --etapa bnp   (idem cjf, julia, stj, tnu)
+         Bash: python scripts/verificar_pesquisa.py "$WORKSPACE" --etapa bnp   (idem cjf, carf, stj, tnu)
          (exit 1 → redespachar SÓ a fonte reprovada com o motivo do gate anexado; máx 2 tentativas;
          na 2ª falha → contingência fonte_indisponivel_no_trilho: INDISPONÍVEL e seguir. Task que
          reporta MCP desconectado → INDISPONÍVEL DIRETO, sem gastar tentativas. Ao menos 1 fonte
@@ -284,7 +285,7 @@ allowed-tools: Read Task Bash TodoWrite
       VOCÊ É UM SUBAGENTE DE CONSOLIDAÇÃO. EXECUTE DIRETAMENTE, SEM PREÂMBULO.
       <passo>Read: .claude/agents/pesquisa/consolidador-pesquisa.md — sua capacidade; siga fielmente.</passo>
       <passo>Read: [listar aqui APENAS os relatórios com gate OK, ex.: $WORKSPACE/$NUMERO-pesquisa-bnp.md,
-             $WORKSPACE/$NUMERO-pesquisa-cjf.md, $WORKSPACE/$NUMERO-pesquisa-julia.md — fonte
+             $WORKSPACE/$NUMERO-pesquisa-cjf.md, $WORKSPACE/$NUMERO-pesquisa-carf.md — fonte
              INDISPONÍVEL fica de fora e deve ser registrada como ausente no consolidado].</passo>
       <passo>Analisar interseções e divergências (TEMAS: $TEMAS) e GRAVAR (Write) o relatório COMPLETO
              em $WORKSPACE/$NUMERO-precedentes-consolidado.md — abrindo com
@@ -298,7 +299,7 @@ allowed-tools: Read Task Bash TodoWrite
       (exit 1 → contingência etapa_invalida; 2ª falha → PARAR e reportar).
       4. Fechamento EXIT-CODED do trilho (com o subconjunto que ficou OK):
          Bash: python scripts/verificar_pesquisa.py "$WORKSPACE" --etapas <subconjunto-ok>,consolidado --gate
-         (ex.: --etapas bnp,cjf,julia,consolidado --gate; fonte INDISPONÍVEL fica FORA do
+         (ex.: --etapas bnp,cjf,carf,consolidado --gate; fonte INDISPONÍVEL fica FORA do
          subconjunto. Exit 1 → algo regrediu; PARAR e reportar.)
       5. Re-rodar o merge de fontes (agora com os parciais novos do trilho):
          Bash: python scripts/merge_fontes.py "$WORKSPACE" --id "$NUMERO"
@@ -511,7 +512,7 @@ PIPELINE SENTENÇA v3.1 — triagem + trilhos condicionais + regime verbatim + g
 │       TodoWrite dinâmico: todos dos trilhos que a ROTA exigir
 ├── 2.6 [SE "pesquisa" na ROTA] Trilho de pesquisa no $WORKSPACE ($ID = $NUMERO):
 │       pesquisadores em PARALELO [Tasks sonnet] (temas = linhas TEMA) → consolidador → merge_fontes.py
-│       retomada/gates: verificar_pesquisa.py --etapas bnp,cjf,julia,consolidado (varredura),
+│       retomada/gates: verificar_pesquisa.py --etapas bnp,cjf,carf,consolidado (varredura),
 │       --etapa <fonte> (cada), fechamento exit-coded --etapas <subconjunto-ok>,consolidado --gate
 │       (STJ/TNU entram no subconjunto só se os MCPs estiverem conectados; sem --gate a varredura
 │       de subconjunto SEMPRE sai 0)

@@ -50,6 +50,7 @@ O identificador (prefixo dos arquivos) é o padrão CNJ no nome da pasta quando
 houver; caso contrário, o próprio basename da pasta. Passe --id para forçar.
 """
 import argparse
+import hashlib
 import os
 import re
 import sys
@@ -72,11 +73,18 @@ def inferir_id(workspace, padrao=RE_CNJ):
     return m.group(0) if m else (base or None)
 
 
-def verificar_etapa(workspace, identificador, etapa, etapas):
+def verificar_etapa(workspace, identificador, etapa, etapas, carimbo=None):
     """Lista de problemas (vazia = válida); None = arquivo AUSENTE.
 
     etapas[etapa] = (sufixo, inicio, fim, contem, minimo). `fim` pode ser str
     (um marcador) ou tupla/lista (fim alternativo — casa se QUALQUER um bater).
+
+    `carimbo`, se informado, é o sha256[:12] da minuta revisada — o laudo tem
+    de carregá-lo em algum lugar do texto. Sem isso, a retomada era indexada só
+    pelo NOME do arquivo (`{identificador}{sufixo}`): minuta diferente na mesma
+    pasta reaproveitava laudo de OUTRA minuta como se já valesse (defeito medido
+    em 07/08/2026, num agravo do escritório — quase reaproveitou os laudos do
+    dia anterior).
     """
     sufixo, inicio, fim, contem, minimo = etapas[etapa]
     caminho = os.path.join(workspace, f"{identificador}{sufixo}")
@@ -100,6 +108,8 @@ def verificar_etapa(workspace, identificador, etapa, etapas):
             problemas.append(f"sem a seção obrigatória ({c!r})")
     if not RE_ACENTO.search(texto):
         problemas.append("sem acentos de português (documento jurídico exige)")
+    if carimbo and carimbo not in n:
+        problemas.append(f"laudo de OUTRA minuta (sem o carimbo sha256 {carimbo})")
     return problemas
 
 
@@ -116,6 +126,8 @@ def rodar_cli(etapas, titulo="pipeline", inferir=inferir_id):
     ap.add_argument("--etapa", choices=sorted(etapas), help="valida só esta etapa (exit-coded)")
     ap.add_argument("--etapas", help="subconjunto separado por vírgula (ex.: linha-tempo,relatorio)")
     ap.add_argument("--gate", action="store_true", help="exit 1 se qualquer etapa pendente/inválida")
+    ap.add_argument("--minuta", help="arquivo revisado; os laudos devem carimbar o sha256[:12] dele "
+                                     "(sem isso a retomada é só por nome, e laudo de OUTRA minuta cola)")
     a = ap.parse_args()
 
     if not os.path.isdir(a.workspace):
@@ -126,8 +138,15 @@ def rodar_cli(etapas, titulo="pipeline", inferir=inferir_id):
         print("[ERRO] identificador não inferível do nome da pasta — passe --id")
         sys.exit(2)
 
+    carimbo = None
+    if a.minuta:
+        if not os.path.isfile(a.minuta):
+            print(f"[ERRO] --minuta não encontrada: {a.minuta}")
+            sys.exit(2)
+        carimbo = hashlib.sha256(open(a.minuta, "rb").read()).hexdigest()[:12]
+
     if a.etapa:
-        r = verificar_etapa(a.workspace, identificador, a.etapa, etapas)
+        r = verificar_etapa(a.workspace, identificador, a.etapa, etapas, carimbo)
         if r is None:
             print(f"[AUSENTE] {a.etapa}")
             sys.exit(1)
@@ -149,7 +168,7 @@ def rodar_cli(etapas, titulo="pipeline", inferir=inferir_id):
     pendentes = []
     print(f"[INICIO] {identificador} -> verificação das {len(alvo)} etapas ({titulo})")
     for etapa in alvo:
-        r = verificar_etapa(a.workspace, identificador, etapa, etapas)
+        r = verificar_etapa(a.workspace, identificador, etapa, etapas, carimbo)
         if r is None:
             print(f"[AUSENTE] {etapa}")
             pendentes.append(etapa)

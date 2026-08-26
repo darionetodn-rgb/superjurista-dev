@@ -1,14 +1,14 @@
-# Orquestrador: planejamento-epistemico v2.0
-
-> **Propósito:** Meta-orquestrador que transforma solicitações em planos de pesquisa multi-dimensional, executa pesquisas profundas para cada tópico, consolida em mapa epistêmico, e opcionalmente gera artefato final.
->
-> **Diferencial:** Usa inteligência adaptativa para criar frameworks de decomposição sob medida. Suporta múltiplas fontes de pesquisa (MCPs jurídicos, WebSearch, diretórios locais). Integra com skills de produção de artefatos de alta qualidade.
-
 ---
 description: Pipeline de planejamento epistêmico - transforma solicitação em pesquisa multi-dimensional com mapa consolidado e artefato opcional
 argument-hint: sua-solicitacao-de-pesquisa (ex: "quero um site sobre os princípios de Bangalore")
 allowed-tools: Read Task Bash TodoWrite Write Glob Skill
 ---
+
+# Orquestrador: planejamento-epistemico v2.0
+
+> **Propósito:** Meta-orquestrador que transforma solicitações em planos de pesquisa multi-dimensional, executa pesquisas profundas para cada tópico, consolida em mapa epistêmico, e opcionalmente gera artefato final.
+>
+> **Diferencial:** Usa inteligência adaptativa para criar frameworks de decomposição sob medida. Suporta múltiplas fontes de pesquisa (MCPs jurídicos, WebSearch, diretórios locais). Integra com skills de produção de artefatos de alta qualidade.
 
 <identidade>
   <papel>Coordenador do pipeline de planejamento epistêmico, não executor</papel>
@@ -400,7 +400,7 @@ allowed-tools: Read Task Bash TodoWrite Write Glob Skill
     <config>
       <modelo>sonnet</modelo>
       <tools_base>Read Write WebSearch WebFetch Glob Grep</tools_base>
-      <tools_mcp>mcp__bnp-api__* mcp__cjf-jurisprudencia__* mcp__julia-trf5__* mcp__infojuris-cnj__*</tools_mcp>
+      <tools_mcp>mcp__bnp-api__* mcp__cjf-jurisprudencia__* mcp__datajud__*</tools_mcp>
       <agent>.claude/agents/pesquisa/pesquisador-epistemico.md</agent>
       <entrada>$WORKSPACE/_plano.md (lista de tópicos)</entrada>
       <saida>$WORKSPACE/topico-NN-[slug].md (um por tópico)</saida>
@@ -422,10 +422,23 @@ allowed-tools: Read Task Bash TodoWrite Write Glob Skill
          b. Determinar tools baseado na fonte do tópico:
             - Se "mcp:bnp" → adicionar mcp__bnp-api__*
             - Se "mcp:cjf" → adicionar mcp__cjf-jurisprudencia__*
-            - Se "mcp:julia" → adicionar mcp__julia-trf5__*
-            - Se "mcp:infojuris" → adicionar mcp__infojuris-cnj__*
+            - Se "mcp:datajud" → adicionar mcp__datajud__*
             - Se "web" → apenas WebSearch WebFetch
             - Se "local:..." → apenas Read Glob Grep
+
+         b2. **CHECAGEM TOOL × FONTE antes do despacho (obrigatória — #484):**
+            `subagent_type` NÃO injeta as tools do agente — o subagente só
+            enxerga o que este comando montar no passo (b). Antes de despachar:
+            - conferir cada `mcp__<servidor>__*` escolhido contra os MCPs
+              registrados (chaves `mcpServers` do `.mcp.json` do workspace +
+              `~/.claude.json` — leitura direta: a lista montada aqui é dinâmica
+              e esta conferência é do orquestrador [HUM]; o checker
+              `py -3 references/conferir_tools_agentes.py` cobre mecanicamente
+              só os ARQUIVOS estáticos de `.claude/`);
+            - fonte cujo MCP não esteja registrado NÃO se despacha às cegas:
+              rebaixar o tópico para fonte `web` e registrar o rebaixamento no
+              arquivo do tópico (foi assim que um MCP morto seguiu despachável
+              por 6 semanas — Observação 535, 17/08).
 
          c. Montar prompt para o tópico específico (ver abaixo)
 
@@ -810,7 +823,7 @@ Agent cria framework:
 - Tópicos:
   1. Origem e Contexto → web
   2. Os Seis Princípios → mcp:bnp + web
-  3. Recepção no Brasil → mcp:cjf + mcp:julia
+  3. Recepção no Brasil → mcp:cjf + mcp:bnp
   4. Casos Práticos → mcp:cjf
   5. Críticas e Limitações → web
 

@@ -1,7 +1,7 @@
 ---
 name: verificador-fontes
 description: Verifica pertinência e vigência de citações jurídicas (precedentes, legislação, doutrina) em decisões judiciais — a autenticidade textual já é conferida por gate de script antes desta revisão
-tools: Read Write mcp__bnp-api__buscar_precedentes mcp__cjf-jurisprudencia__buscar_jurisprudencia_cjf mcp__julia-trf5__buscar_julia WebSearch
+tools: Read Write mcp__bnp-api__buscar_precedentes mcp__cjf-jurisprudencia__buscar_jurisprudencia_cjf WebSearch
 model: opus
 color: red
 ---
@@ -95,12 +95,12 @@ color: red
     invocado por paráfrase (Nível 2) consta do arquivo com identificador rastreável
   - WebSearch é fallback EXCLUSIVO para legislação (ex.: planalto.gov.br) — NUNCA usar
     WebSearch para conferir vigência ou teor de jurisprudência/precedentes; use os
-    MCPs (BNP/CJF/JULIA) para isso
+    MCPs (BNP/CJF) para isso
   - DOUTRINA é PROIBIDA na minuta automatizada — qualquer citação doutrinária
     encontrada é, por si só, apontamento de gravidade ALTA (violação do regime de
     citação); NÃO pesquisar doutrina em lugar nenhum (nem MCP, nem WebSearch) e NÃO
     presumir que foi autenticada pelo gate (o gate não valida doutrina)
-  - SEMPRE documentar a fonte de cada verificação de vigência (BNP, CJF, JULIA)
+  - SEMPRE documentar a fonte de cada verificação de vigência (BNP, CJF)
   - SEMPRE usar português com acentos corretos
   - SEMPRE classificar gravidade dos problemas de pertinência encontrados
   - Se a vigência não puder ser confirmada nos MCPs, considerar INCONCLUSIVO (não
@@ -182,7 +182,6 @@ color: red
     cancelado, modulado, ou está sob tema pendente que o afeta:
     ```
     BNP → súmulas, temas de repercussão geral/repetitivos, vinculantes
-    JULIA → jurisprudência TRF5 (1º e 2º grau)
     CJF → STF, STJ, TRF1-TRF6
     ```
     Nunca presumir vigência com base no que a minuta afirma — sempre confirmar a
@@ -246,7 +245,6 @@ color: red
   ┌─────────────────────────────────────────────────────────────────┐
   │  1. MCPs ESPECIALIZADOS (re-pesquisa de vigência e teor)        │
   │     ├── BNP → Súmulas, Temas RG/RR, Vinculantes                │
-  │     ├── JULIA → Jurisprudência TRF5 (2º e 1º grau)             │
   │     └── CJF → STF, STJ, TRF1-TRF6                               │
   ├─────────────────────────────────────────────────────────────────┤
   │  2. WEBSEARCH (fallback restrito a LEGISLAÇÃO — nunca a         │
@@ -261,7 +259,6 @@ color: red
   |------------|---------|---------|
   | BNP | +termo -termo "frase" | +súmula +111 |
   | CJF | E OU NAO ADJ PROX (MAIÚSCULO) | súmula E 111[EMEN] |
-  | JULIA | e ou nao prox adj $ (minúsculo) | súmula e 111 |
   | WebSearch (só legislação) | linguagem natural | Art. 57 Lei 8213/91 vigência |
 
   ## Padrões de Busca por Tipo (para confirmar vigência/teor)
@@ -273,7 +270,6 @@ color: red
   | Súmula Vinculante | BNP | "súmula vinculante" +[N] |
   | Tema RG | BNP | "tema [N]" +STF |
   | Tema RR | BNP | "tema [N]" +STJ |
-  | Acórdão TRF5 | JULIA | [número processo] |
   | Acórdão STJ/STF | CJF | [número][PROC] |
   | Artigo de Lei | WebSearch | Art. [X] Lei [N]/[ano] vigência site:planalto.gov.br |
   | Doutrina | — (não pesquisar) | Apontamento direto: violação do regime de citação — ver Passo 7 |
@@ -398,7 +394,7 @@ color: red
        assim ser inaplicável ao caso
     5. **NÍVEL 2 EXIGE LASTRO**: toda paráfrase de precedente deve ter identificador
        rastreável no arquivo de fontes
-    6. **PRIORIZAR FONTES OFICIAIS**: BNP/CJF/JULIA para vigência > WebSearch,
+    6. **PRIORIZAR FONTES OFICIAIS**: BNP/CJF para vigência > WebSearch,
        restrito a legislação
 
     ## Níveis de Confiança
@@ -407,7 +403,6 @@ color: red
     |-------|-----------|-------------|
     | BNP | Alta (99%) | Vigência de precedentes qualificados |
     | CJF | Alta (95%) | Vigência de jurisprudência STF/STJ/TRFs |
-    | JULIA | Alta (95%) | Vigência de jurisprudência TRF5 |
     | planalto.gov.br | Alta (99%) | Vigência de legislação federal |
     | $NUMERO-fontes.json | Alta (100% do que foi capturado) | Teor de Nível 1/2 já coletado |
     | WebSearch (só legislação) | Média (70%) | Vigência de legislação não coberta pelos MCPs |
@@ -467,7 +462,7 @@ pertinência, vigência, contexto fático e lastro de Nível 2.
 **Problema identificado:** [RATIO NÃO SUSTENTA | SUPERADO/CANCELADO | CONTEXTO FÁTICO INCOMPATÍVEL | NÍVEL 2 SEM LASTRO | DOUTRINA CITADA (PROIBIDA)]
 
 **Pesquisa realizada:**
-- Fonte consultada: [BNP | CJF | JULIA | WebSearch (legislação) | fontes.json]
+- Fonte consultada: [BNP | CJF | WebSearch (legislação) | fontes.json]
 - Query utilizada: `[query]`
 - Resultado: [O que foi encontrado]
 

@@ -17,7 +17,9 @@ Uso:
       -> exit 0: todas as citações conferem; 1: alguma não confere; 2: erro de uso
 
 LIMIAR default 60 (calibrado contra fundamentações reais — ver Tarefa 3 do plano
-2026-07-11). --doc aceita sufixo ("-sentenca.md") ou caminho completo de minuta.
+2026-07-11). --doc aceita sufixo ("-sentenca.md") ou caminho completo de minuta,
+em .docx (Word, lido por python-docx — inclusive texto dentro de TABELA) ou em
+texto puro (.md/.txt). Ver ler_documento().
 ATENÇÃO: sufixo começa com hífen — usar a forma --doc=-sentenca.md (com "=");
 argparse rejeita "--doc -sentenca.md" com valor separado por espaço.
 
@@ -121,6 +123,67 @@ def verificar(doc_texto, corpus, limiar):
     return problemas, conferidas
 
 
+def ler_documento(caminho):
+    """Lê o documento alvo. Aceita .docx (Word) e texto puro (.md/.txt).
+
+    A minuta do escritório é sempre .docx; até 13/08/2026 este script abria
+    qualquer caminho com open(encoding="utf-8") e morria em UnicodeDecodeError,
+    e a conversão manual se repetia a cada corrida do /pipeline-revisao-minuta.
+
+    Duas armadilhas conhecidas, tratadas aqui:
+
+    1. `documento.paragraphs` do python-docx NÃO enxerga texto dentro de tabela.
+       O corpo é percorrido pelo XML, na ordem real do documento, para que
+       citação dentro de tabela entre no regime do gate.
+    2. `PackageNotFoundError` é a MESMA exceção para "não existe", "está aberto
+       no Word" e "não é um zip/docx real" — o traceback cru manda caçar a causa
+       errada. A mensagem abaixo nomeia as três.
+
+    O .docx sai como texto tipo Markdown: parágrafo de estilo "Heading N" vira
+    linha iniciada por '#', para que --ignorar-apos (que corta em HEADING) valha
+    igual nos dois formatos.
+    """
+    if not caminho.lower().endswith(".docx"):
+        return open(caminho, encoding="utf-8").read()
+
+    try:
+        import docx
+        from docx.opc.exceptions import PackageNotFoundError
+        from docx.table import Table
+        from docx.text.paragraph import Paragraph
+    except ImportError:
+        print("[ERRO] leitura de .docx exige python-docx: py -3 -m pip install python-docx")
+        sys.exit(2)
+
+    try:
+        documento = docx.Document(caminho)
+    except PackageNotFoundError:
+        print(f"[ERRO] python-docx nao abriu: {caminho}\n"
+              "       A mesma excecao cobre TRES causas distintas — confira as tres:\n"
+              "       (a) o caminho nao existe;\n"
+              "       (b) o arquivo esta ABERTO no Word (feche e repita);\n"
+              "       (c) nao e um .docx real (arquivo renomeado).")
+        sys.exit(2)
+
+    linhas = []
+    for filho in documento.element.body.iterchildren():
+        if filho.tag.endswith("}p"):
+            paragrafo = Paragraph(filho, documento)
+            texto = paragrafo.text
+            estilo = paragrafo.style.name if paragrafo.style is not None else ""
+            if texto.strip() and (estilo or "").lower().startswith("heading"):
+                linhas.append("# " + texto)
+            else:
+                linhas.append(texto)
+        elif filho.tag.endswith("}tbl"):
+            for linha_tabela in Table(filho, documento).rows:
+                for celula in linha_tabela.cells:
+                    for p in celula.paragraphs:
+                        if p.text.strip():
+                            linhas.append(p.text)
+    return "\n".join(linhas)
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -152,7 +215,7 @@ def main():
         sys.exit(2)
 
     corpus, avisos = carregar_corpus(a.workspace, ident)
-    texto = open(doc, encoding="utf-8").read()
+    texto = ler_documento(doc)
     if a.ignorar_apos:
         texto, linha_corte = truncar_apos_marcador(texto, a.ignorar_apos)
         if linha_corte:

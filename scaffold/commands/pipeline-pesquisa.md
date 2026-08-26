@@ -1,5 +1,5 @@
 ---
-description: Pipeline de pesquisa de precedentes - 5 fontes em paralelo (BNP, CJF, JULIA, STJ, TNU), consolidação e fontes verbatim (v3.0)
+description: Pipeline de pesquisa de precedentes - 5 fontes em paralelo (BNP, CJF, CARF, STJ, TNU), consolidação e fontes verbatim (v3.0 adaptado DN)
 argument-hint: <tema-juridico | caminho-de-workspace [tema]>
 allowed-tools: Read Task Bash TodoWrite
 ---
@@ -14,9 +14,14 @@ allowed-tools: Read Task Bash TodoWrite
 > um parcial `fontes-<fonte>.json` e `scripts/merge_fontes.py` produz o corpus `$ID-fontes.json`
 > (cadeia de custódia das citações, consumida por `scripts/verificar_citacoes.py`); (4) subagente
 > responde UMA LINHA de status — o relatório vive no arquivo, nunca na conversa; (5) FONTES
-> COMPLETAS — além de BNP/CJF/JULIA, o pipeline pesquisa STJ (espelhos SCON via Dados Abertos) e
+> COMPLETAS — além de BNP/CJF/CARF, o pipeline pesquisa STJ (espelhos SCON via Dados Abertos) e
 > TNU (base viva do eproc), fechando a lista de fontes autorizadas. Os métodos de busca (sintaxe
 > de cada MCP) vivem nos agentes pesquisadores.
+>
+> **Adaptação DN (06/08/2026, Fase 2 do arsenal):** JULIA (TRF5) fora — o titular não atua no
+> TRF5; no lugar entra o CARF (contencioso administrativo tributário federal, o núcleo da
+> atuação do escritório). A troca vale aqui, no `verificar_pesquisa.py` (etapa `carf`) e no
+> `consolidador-pesquisa.md`. Sintaxe por fonte conferida contra os servidores em 06/08/2026.
 
 <identidade>
   <papel>Coordenador do pipeline de pesquisa de precedentes, não executor — despacha pesquisadores em paralelo, valida por script e retoma</papel>
@@ -24,7 +29,7 @@ allowed-tools: Read Task Bash TodoWrite
 </identidade>
 
 <proposito>
-  <objetivo>Pesquisar precedentes em cinco fontes simultâneas (BNP, CJF, JULIA, STJ, TNU) e produzir relatório consolidado ($ID-precedentes-consolidado.md) mais o corpus de fontes verbatim ($ID-fontes.json), com etapas retomáveis e validadas por script</objetivo>
+  <objetivo>Pesquisar precedentes em cinco fontes simultâneas (BNP, CJF, CARF, STJ, TNU) e produzir relatório consolidado ($ID-precedentes-consolidado.md) mais o corpus de fontes verbatim ($ID-fontes.json), com etapas retomáveis e validadas por script</objetivo>
   <razao>Pesquisar manualmente em cinco sistemas é demorado e propenso a omissões; a validação determinística e a retomada evitam repagar pesquisa já feita, e o corpus verbatim garante que nenhuma citação nasça sem lastro no MCP</razao>
   <resultado_final>Relatório consolidado com hierarquia de precedentes vinculantes, convergências/divergências e recomendações, mais $ID-fontes.json com os trechos EXATOS retornados pelos MCPs</resultado_final>
 </proposito>
@@ -51,7 +56,7 @@ allowed-tools: Read Task Bash TodoWrite
     |-------|------------|---------|
     | pesquisador-bnp | Precedentes vinculantes STF/STJ | .claude/agents/pesquisa/pesquisador-bnp.md |
     | pesquisador-cjf | Jurisprudência regional TRF1/TRF3/TRF4 (radar de bases vivas) | .claude/agents/pesquisa/pesquisador-cjf.md |
-    | pesquisador-julia | Jurisprudência TRF5 (por turma) | .claude/agents/pesquisa/pesquisador-julia.md |
+    | pesquisador-carf | Jurisprudência administrativa tributária (CARF/CSRF) | .claude/agents/pesquisa/pesquisador-carf.md |
     | pesquisador-stj | Jurisprudência STJ (repetitivos, súmulas, dominante) | .claude/agents/pesquisa/pesquisador-stj.md |
     | pesquisador-tnu | Jurisprudência TNU (representativos, uniformização JEFs) | .claude/agents/pesquisa/pesquisador-tnu.md |
     | consolidador-pesquisa | Análise cruzada e hierarquia | .claude/agents/pesquisa/consolidador-pesquisa.md |
@@ -94,13 +99,28 @@ allowed-tools: Read Task Bash TodoWrite
   <limite_tentativas>2 por etapa; pesquisador que estoura vira INDISPONÍVEL (não silencia); consolidador que estoura PARA o pipeline.</limite_tentativas>
 </contingencias>
 
+<fontes_fora_do_pipeline>
+  Conectores do escritório que NÃO entram nas 5 fontes deste pipeline — usar por invocação
+  direta quando o caso pedir (medições de 06/08/2026):
+  - **TJAM (histórico até 07/07/2025):** a base de ementas do e-SAJ parou nessa data (migração
+    para o PROJUDI); o MCP `tjam-jurisprudencia` consulta fielmente esse histórico. Invocar com
+    `tipo_decisao="A,D"` para cobrir os DOIS baldes (Acórdãos + Decisões Monocráticas — o padrão
+    do servidor busca só Acórdãos, e o balde de monocráticas é o maior). **TJAM recente
+    (≥ jul/2025): não há rota automatizável** — rota de navegador (Claude in Chrome), com o
+    titular presente.
+  - **TCU:** o MCP `tcu-jurisprudencia` fica fora do ar diariamente entre **20h e 21h**
+    (manutenção da base) — consulta nesse horário falha; replanejar fora da janela.
+  - Demais conectores (TCE-AM, JurisDF, DataJud): invocação direta pelo nome; sintaxe própria
+    de cada um na tabela de `references/arsenal-processual-dn.md`.
+</fontes_fora_do_pipeline>
+
 <contratos_dados>
   | # | Etapa | Agente | Entrada | Saída | Validação |
   |---|-------|--------|---------|-------|-----------|
   | 0 | Preparação | — | $ARGUMENTS | $WORKSPACE, $ID, $TEMA + varredura | PENDENTES conhecidas |
   | 1a | Pesquisa BNP | pesquisa/pesquisador-bnp.md | $TEMA | $ID-pesquisa-bnp.md + fontes-bnp.json | verificar --etapa bnp → 0 |
   | 1b | Pesquisa CJF | pesquisa/pesquisador-cjf.md | $TEMA | $ID-pesquisa-cjf.md + fontes-cjf.json | verificar --etapa cjf → 0 |
-  | 1c | Pesquisa JULIA | pesquisa/pesquisador-julia.md | $TEMA | $ID-pesquisa-julia.md + fontes-julia.json | verificar --etapa julia → 0 |
+  | 1c | Pesquisa CARF | pesquisa/pesquisador-carf.md | $TEMA | $ID-pesquisa-carf.md + fontes-carf.json | verificar --etapa carf → 0 |
   | 1d | Pesquisa STJ | pesquisa/pesquisador-stj.md | $TEMA | $ID-pesquisa-stj.md + fontes-stj.json | verificar --etapa stj → 0 |
   | 1e | Pesquisa TNU | pesquisa/pesquisador-tnu.md | $TEMA | $ID-pesquisa-tnu.md + fontes-tnu.json | verificar --etapa tnu → 0 |
   | 2 | Consolidação | pesquisa/consolidador-pesquisa.md | relatórios com gate OK | $ID-precedentes-consolidado.md | verificar --etapa consolidado → 0 |
@@ -134,7 +154,7 @@ allowed-tools: Read Task Bash TodoWrite
       4. TodoWrite com as etapas — as já válidas nascem completed:
          [{content: "Etapa 0 - Preparação", status: "completed", activeForm: "Preparando pesquisa"},
           {content: "Etapa 1a - Pesquisa BNP", status: <pendente? "pending" : "completed">, activeForm: "Pesquisando BNP"},
-          {content: "Etapa 1b - Pesquisa CJF", ...}, {content: "Etapa 1c - Pesquisa JULIA", ...},
+          {content: "Etapa 1b - Pesquisa CJF", ...}, {content: "Etapa 1c - Pesquisa CARF", ...},
           {content: "Etapa 1d - Pesquisa STJ", ...}, {content: "Etapa 1e - Pesquisa TNU", ...},
           {content: "Etapa 2 - Consolidação e merge de fontes", ...},
           {content: "Etapa 3 - Finalização", status: "pending", activeForm: "Finalizando"}]
@@ -143,7 +163,7 @@ allowed-tools: Read Task Bash TodoWrite
   </etapa>
 
   <etapa numero="1" nome="Pesquisas em paralelo (sonnet) — SÓ as pendentes" modo="paralelo">
-    <retomada>Para cada fonte (bnp, cjf, julia, stj, tnu): se NÃO está em PENDENTES → pular (não despachar). Despachar as pendentes no MESMO turno (até 5 Tasks).</retomada>
+    <retomada>Para cada fonte (bnp, cjf, carf, stj, tnu): se NÃO está em PENDENTES → pular (não despachar). Despachar as pendentes no MESMO turno (até 5 Tasks).</retomada>
     <acao_orquestrador>
       Task (sonnet) para CADA fonte pendente, com o prompt-invólucro (exemplo BNP):
       ═══════════════════════════════════════════════════════════════════
@@ -166,10 +186,12 @@ allowed-tools: Read Task Bash TodoWrite
         Sintaxe CJF: E OU NAO ADJ PROX (MAIÚSCULO); pesquise APENAS TRF1, TRF3, TRF4
         (tribunais="TRF1,TRF3,TRF4" — únicas bases vivas do CJF; STF/STJ/TRF5 têm fontes
         próprias); identifique divergências regionais.
-      - JULIA → .claude/agents/pesquisa/pesquisador-julia.md; $ID-pesquisa-julia.md; fontes-julia.json;
-        abre "# Pesquisa JULIA", fecha "Pesquisa JULIA concluída.".
-        Sintaxe JULIA: e ou nao adj prox $ (minúsculo); analise por turma; verifique IRDRs
-        vinculantes.
+      - CARF → .claude/agents/pesquisa/pesquisador-carf.md; $ID-pesquisa-carf.md; fontes-carf.json;
+        abre "# Pesquisa CARF", fecha "Pesquisa CARF concluída.".
+        Sintaxe CARF (Lucene/Solr): espaço entre termos já restringe (equivale a E — NÃO
+        escrever operador de conjunção); OR e NOT em MAIÚSCULO; frase exata "..."; proximidade
+        "a b"~N; SEMPRE ordenar_por="recentes" (o padrão por relevância esconde o recente);
+        filtros: ano_sessao, secao, materia, relator; destaque a posição da CSRF e Súmulas CARF.
       - STJ → .claude/agents/pesquisa/pesquisador-stj.md; $ID-pesquisa-stj.md; fontes-stj.json;
         abre "# Pesquisa STJ", fecha "Pesquisa STJ concluída.".
         Sintaxe STJ: espaço é E implícito, ou nao "frase" termo* (sem parênteses; caixa/acentos
@@ -179,7 +201,7 @@ allowed-tools: Read Task Bash TodoWrite
         Sintaxe TNU: e ou nao prox * "frase" (prox SEM número; wildcard em sufixo ou prefixo);
         use somente_precedentes_relevantes para os representativos; foque uniformização/JEFs.
       Aguardar TODAS as Tasks despachadas e validar CADA fonte:
-      Bash: python scripts/verificar_pesquisa.py "$WORKSPACE" --etapa bnp   (idem cjf, julia, stj, tnu)
+      Bash: python scripts/verificar_pesquisa.py "$WORKSPACE" --etapa bnp   (idem cjf, carf, stj, tnu)
       (exit 1 → contingência etapa_invalida: redespachar SÓ a fonte reprovada com o motivo do gate
       anexado; máx 2 tentativas; na 2ª falha → contingência fonte_indisponivel).
     </acao_orquestrador>
@@ -195,7 +217,7 @@ allowed-tools: Read Task Bash TodoWrite
       <passo>Read: .claude/agents/pesquisa/consolidador-pesquisa.md — sua capacidade; siga fielmente.</passo>
       <passo>Read: [listar aqui APENAS os relatórios com gate OK, ex.:
              $WORKSPACE/$ID-pesquisa-bnp.md, $WORKSPACE/$ID-pesquisa-cjf.md,
-             $WORKSPACE/$ID-pesquisa-julia.md, $WORKSPACE/$ID-pesquisa-stj.md,
+             $WORKSPACE/$ID-pesquisa-carf.md, $WORKSPACE/$ID-pesquisa-stj.md,
              $WORKSPACE/$ID-pesquisa-tnu.md — fonte INDISPONÍVEL fica de fora e deve ser
              registrada como ausente no consolidado].</passo>
       <passo>Analisar interseções e divergências (TEMA: $TEMA) e GRAVAR (Write) o relatório
@@ -222,7 +244,7 @@ allowed-tools: Read Task Bash TodoWrite
          - Sem fonte INDISPONÍVEL: Bash: python scripts/verificar_pesquisa.py "$WORKSPACE" --gate
          - Com fonte(s) INDISPONÍVEL(is) após 2 tentativas:
            Bash: python scripts/verificar_pesquisa.py "$WORKSPACE" --etapas <fontes-ok>,consolidado --gate
-           (ex.: --etapas bnp,julia,stj,consolidado --gate — TNU indisponível na sessão)
+           (ex.: --etapas bnp,carf,tnu,consolidado --gate — STJ indisponível na sessão)
          (exit 1 → algo regrediu; reportar o output e PARAR).
       2. Resumo de 1 tela ao usuário, SEM transcrever conteúdo dos relatórios:
          - Tema e $WORKSPACE
@@ -243,7 +265,7 @@ PIPELINE PESQUISA v3.0 — workspace determinístico + gate por script + retomad
 ├── 1 Pesquisas em PARALELO (só as pendentes; até 5 Tasks sonnet no mesmo turno)
 │   ├── bnp   [Task sonnet] → $ID-pesquisa-bnp.md   + fontes-bnp.json   ─┐ cada uma: pula se
 │   ├── cjf   [Task sonnet] → $ID-pesquisa-cjf.md   + fontes-cjf.json    │ válida; grava arquivos;
-│   ├── julia [Task sonnet] → $ID-pesquisa-julia.md + fontes-julia.json  │ 1 linha; gate --etapa
+│   ├── carf  [Task sonnet] → $ID-pesquisa-carf.md  + fontes-carf.json   │ 1 linha; gate --etapa
 │   ├── stj   [Task sonnet] → $ID-pesquisa-stj.md   + fontes-stj.json    │ (MCP desconectado →
 │   └── tnu   [Task sonnet] → $ID-pesquisa-tnu.md   + fontes-tnu.json   ─┘  INDISPONÍVEL direto)
 ├── 2 Consolidação [Task sonnet] → $ID-precedentes-consolidado.md (gate --etapa consolidado)

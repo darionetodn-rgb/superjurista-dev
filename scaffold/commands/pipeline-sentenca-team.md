@@ -25,7 +25,7 @@ allowed-tools: Read Task Bash TodoWrite Glob
   </objetivo>
   <razao>
     A versão v2 executa tudo sequencialmente. A v3 introduz Agent Teams para:
-    - Pesquisar precedentes em paralelo (BNP, CJF, JULIA)
+    - Pesquisar precedentes em paralelo (BNP, CJF, STJ)
     - Verificar conformidade em paralelo (honorários, cálculos, remessa)
     - Enriquecer análise com precedentes
     - Evitar erros técnicos na fundamentação
@@ -54,7 +54,7 @@ allowed-tools: Read Task Bash TodoWrite Glob
     | relator-marmelstein | Read Write |
     | pesquisador-bnp | Read Write mcp__bnp-api__* |
     | pesquisador-cjf | Read Write mcp__cjf-jurisprudencia__* |
-    | pesquisador-julia | Read Write mcp__julia-trf5__* |
+    | pesquisador-stj | Read Write mcp__claude_ai_PESQUISA_STJ__* |
     | analisador-marmelstein | Read Write |
     | verificador-honorarios | Read Write |
     | verificador-calculos | Read Write |
@@ -130,7 +130,7 @@ allowed-tools: Read Task Bash TodoWrite Glob
       {content: "Etapa 0 - Preparação", status: "completed", activeForm: "Preparando"},
       {content: "Etapa 1 - Linha do Tempo", status: "pending", activeForm: "Extraindo cronologia"},
       {content: "Etapa 2 - Relatório", status: "pending", activeForm: "Gerando relatório"},
-      {content: "Etapa 2.5 - TEAM Pesquisa (BNP+CJF+JULIA)", status: "pending", activeForm: "Pesquisando precedentes"},
+      {content: "Etapa 2.5 - TEAM Pesquisa (BNP+CJF+STJ)", status: "pending", activeForm: "Pesquisando precedentes"},
       {content: "Etapa 3 - Análise (+ precedentes)", status: "pending", activeForm: "Analisando caso"},
       {content: "Etapa 3.5 - TEAM Verificação (Hon+Calc+Rem)", status: "pending", activeForm: "Verificando conformidade"},
       {content: "Etapa 4 - Fundamentação (+ verificações)", status: "pending", activeForm: "Fundamentando"},
@@ -170,7 +170,7 @@ allowed-tools: Read Task Bash TodoWrite Glob
     | Relatório | $NUMERO-relatorio.md | 0814624-relatorio.md |
     | Pesquisa BNP | $INPUTS/pesquisa-bnp.md | inputs/pesquisa-bnp.md |
     | Pesquisa CJF | $INPUTS/pesquisa-cjf.md | inputs/pesquisa-cjf.md |
-    | Pesquisa JULIA | $INPUTS/pesquisa-julia.md | inputs/pesquisa-julia.md |
+    | Pesquisa STJ | $INPUTS/pesquisa-stj.md | inputs/pesquisa-stj.md |
     | Análise | $NUMERO-analise.md | 0814624-analise.md |
     | Verif. Honorários | $INPUTS/verificacao-honorarios.md | inputs/verificacao-honorarios.md |
     | Verif. Cálculos | $INPUTS/verificacao-calculos.md | inputs/verificacao-calculos.md |
@@ -187,7 +187,7 @@ allowed-tools: Read Task Bash TodoWrite Glob
     | relator-marmelstein | extracao | .claude/agents/extracao/relator-marmelstein.md |
     | pesquisador-bnp | pesquisa | .claude/agents/pesquisa/pesquisador-bnp.md |
     | pesquisador-cjf | pesquisa | .claude/agents/pesquisa/pesquisador-cjf.md |
-    | pesquisador-julia | pesquisa | .claude/agents/pesquisa/pesquisador-julia.md |
+    | pesquisador-stj | pesquisa | .claude/agents/pesquisa/pesquisador-stj.md |
     | analisador-marmelstein | analise | .claude/agents/analise/analisador-marmelstein.md |
     | verificador-honorarios | revisao | .claude/agents/revisao/verificador-honorarios.md |
     | verificador-calculos | revisao | .claude/agents/revisao/verificador-calculos.md |
@@ -283,7 +283,7 @@ allowed-tools: Read Task Bash TodoWrite Glob
          Workspace: $WORKSPACE
 
          NOVIDADES v3.0:
-         - TEAM Pesquisa: BNP + CJF + JULIA (paralelo)
+         - TEAM Pesquisa: BNP + CJF + STJ (paralelo)
          - TEAM Verificação: Honorários + Cálculos + Remessa (paralelo)
          - Análise enriquecida com precedentes
          - Fundamentação validada contra erros
@@ -374,7 +374,7 @@ allowed-tools: Read Task Bash TodoWrite Glob
 
   <etapa numero="2.5" nome="TEAM Pesquisa" modo="paralelo">
     <config>
-      <teammates>pesquisador-bnp, pesquisador-cjf, pesquisador-julia</teammates>
+      <teammates>pesquisador-bnp, pesquisador-cjf, pesquisador-stj</teammates>
       <entrada_compartilhada>$NUMERO-relatorio.md</entrada_compartilhada>
       <outputs_destino>$INPUTS/</outputs_destino>
     </config>
@@ -409,17 +409,17 @@ allowed-tools: Read Task Bash TodoWrite Glob
              4. Pesquise no CJF usando mcp__cjf-jurisprudencia__buscar_jurisprudencia_cjf
              5. Write: $INPUTS/pesquisa-cjf.md
 
-         Task 3 (JULIA):
-           subagent_type: pesquisador-julia
+         Task 3 (STJ):
+           subagent_type: pesquisador-stj
            prompt: |
-             Pesquise jurisprudência no JULIA/TRF5.
+             Pesquise jurisprudência no STJ (base SCON).
 
              INSTRUÇÕES:
-             1. Read: .claude/agents/pesquisa/pesquisador-julia.md
+             1. Read: .claude/agents/pesquisa/pesquisador-stj.md
              2. Read: $WORKSPACE/$NUMERO-relatorio.md
              3. Extraia termos-chave do relatório
-             4. Pesquise no JULIA usando mcp__julia-trf5__buscar_julia
-             5. Write: $INPUTS/pesquisa-julia.md
+             4. Pesquise no STJ usando mcp__claude_ai_PESQUISA_STJ__buscar_stj
+             5. Write: $INPUTS/pesquisa-stj.md
          ```
 
       3. **Aguardar TODAS as Tasks concluírem**
@@ -437,7 +437,7 @@ allowed-tools: Read Task Bash TodoWrite Glob
          |---|----------|--------|--------|
          | 1 | pesquisador-bnp | concluído/erro | inputs/pesquisa-bnp.md |
          | 2 | pesquisador-cjf | concluído/erro | inputs/pesquisa-cjf.md |
-         | 3 | pesquisador-julia | concluído/erro | inputs/pesquisa-julia.md |
+         | 3 | pesquisador-stj | concluído/erro | inputs/pesquisa-stj.md |
 
          **Resultado:** X/3 concluídos
          ```
@@ -490,7 +490,7 @@ allowed-tools: Read Task Bash TodoWrite Glob
            4. INPUTS OPCIONAIS (se existirem):
               Se existir $INPUTS/pesquisa-bnp.md → Read e incorporar precedentes STF/STJ
               Se existir $INPUTS/pesquisa-cjf.md → Read e incorporar jurisprudência TRFs
-              Se existir $INPUTS/pesquisa-julia.md → Read e incorporar jurisprudência TRF5
+              Se existir $INPUTS/pesquisa-stj.md → Read e incorporar jurisprudência STJ
 
               Se nenhuma pesquisa existir → Registrar: "Análise sem precedentes pesquisados"
 
@@ -733,7 +733,7 @@ PIPELINE /pipeline-sentenca-team v3.0
 ├── ETAPA 2.5: TEAM Pesquisa (PARALELO)
 │   ├── pesquisador-bnp    → inputs/pesquisa-bnp.md
 │   ├── pesquisador-cjf    → inputs/pesquisa-cjf.md
-│   └── pesquisador-julia  → inputs/pesquisa-julia.md
+│   └── pesquisador-stj  → inputs/pesquisa-stj.md
 │
 ├── ETAPA 3: Análise (recebe pesquisas opcionalmente)
 │

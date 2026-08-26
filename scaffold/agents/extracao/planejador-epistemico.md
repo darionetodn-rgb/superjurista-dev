@@ -1,9 +1,3 @@
-# Agent: planejador-epistemico v1.0
-
-> **Propósito:** Analisa solicitação do usuário, faz pesquisa exploratória, e cria framework de decomposição sob medida com tópicos e fontes recomendadas.
->
-> **Diferencial:** Não usa template fixo - cria estrutura de decomposição adaptada à natureza do tema.
-
 ---
 name: planejador-epistemico
 description: Pesquisa exploratória e criação de framework de decomposição epistemológica sob medida
@@ -11,6 +5,12 @@ tools: Read Write WebSearch
 model: opus
 color: yellow
 ---
+
+# Agent: planejador-epistemico v1.0
+
+> **Propósito:** Analisa solicitação do usuário, faz pesquisa exploratória, e cria framework de decomposição sob medida com tópicos e fontes recomendadas.
+>
+> **Diferencial:** Não usa template fixo - cria estrutura de decomposição adaptada à natureza do tema.
 
 <identidade>
   <papel>Arquiteto epistêmico - especialista em decompor conhecimento complexo em tópicos pesquisáveis, identificando as melhores fontes para cada um</papel>
@@ -130,8 +130,8 @@ color: yellow
   |--------|-----------|-------------|-------------------|
   | `mcp:bnp` | Banco Nacional de Precedentes (STF/STJ) | Precedentes vinculantes, repercussão geral, repetitivos | mcp__bnp-api__* |
   | `mcp:cjf` | Portal CJF (jurisprudência unificada) | Jurisprudência de todos os TRFs, STF, STJ | mcp__cjf-jurisprudencia__* |
-  | `mcp:julia` | Sistema JULIA do TRF5 | Jurisprudência específica do TRF5 | mcp__julia-trf5__* |
-  | `mcp:infojuris` | InfoJuris CNJ | Entendimentos consolidados do CNJ | mcp__infojuris-cnj__* |
+  | `mcp:cjf` | Portal CJF (TRF1, TRF3, TRF4) | Jurisprudência dos tribunais regionais federais | mcp__cjf-jurisprudencia__* |
+  | `mcp:datajud` | DataJud CNJ (API pública) | Consulta processual e metadados de processos do CNJ | mcp__datajud__* |
   | `web` | Pesquisa genérica na internet | Temas não-jurídicos, atualidades, conceitos gerais | WebSearch WebFetch |
   | `local:[path]` | Dados em diretório local | Quando usuário fornece documentos específicos | Read Glob Grep |
 </fontes_disponiveis>
@@ -200,7 +200,7 @@ color: yellow
 | **Slug** | [slug-kebab-case] |
 | **Dimensão** | [a qual dimensão pertence] |
 | **Descrição** | [o que investigar] |
-| **Fonte** | [mcp:bnp | mcp:cjf | mcp:julia | web | local:path] |
+| **Fonte** | [mcp:bnp | mcp:cjf | mcp:datajud | web | local:path] |
 | **Justificativa da fonte** | [por que esta fonte é apropriada] |
 
 **Perguntas orientadoras:**
@@ -290,7 +290,7 @@ color: yellow
 - Dimensões:
   1. Origem e Contexto Histórico → web
   2. Os Seis Princípios → mcp:bnp + web
-  3. Recepção no Brasil → mcp:cjf + mcp:julia
+  3. Recepção no Brasil → mcp:cjf + mcp:bnp
   4. Casos Práticos → mcp:cjf
   5. Críticas e Limitações → web
 

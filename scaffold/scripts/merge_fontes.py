@@ -43,9 +43,20 @@ import unicodedata
 
 RE_CNJ = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
 
-ORIGENS_AUTORIZADAS = {"bnp-api", "cjf-jurisprudencia", "julia-trf5",
+# Allowlist reconciliada em 19/08/2026 (Auditoria CC F3), nos dois sentidos:
+#  + carf-jurisprudencia ENTROU: fonte real, instalada, das mais usadas no tributario,
+#    e vinha sendo REJEITADA item a item (medido 17/08, reincidente 18/08, num caso
+#    real do escritorio).
+#  - julia-trf5 SAIU: MCP do TRF5, nunca registrado nesta maquina (o escritorio litiga
+#    no TRF1). NAO e decisao nova — foi decidida em 06/08 na Fase 1 do arsenal
+#    (references/arsenal-processual-dn.md, "Restos do MCP julia-trf5"), e o proprio
+#    substituto declarado e o CARF desde 29/07 (references/superjurista-pipeline.md).
+#    Conferido antes de tirar: nenhum corpus em disco tem item com essa origem.
+# Guarda mecanica: scripts/test_merge_fontes.py (o caso D reprova quem reintroduzir).
+ORIGENS_AUTORIZADAS = {"bnp-api", "carf-jurisprudencia", "cjf-jurisprudencia",
                         "pesquisa-stj", "tnu-eproc"}
-PREFIXOS = {"bnp-api": "BNP", "cjf-jurisprudencia": "CJF", "julia-trf5": "JULIA",
+PREFIXOS = {"bnp-api": "BNP", "carf-jurisprudencia": "CARF",
+            "cjf-jurisprudencia": "CJF",
             "pesquisa-stj": "STJ", "tnu-eproc": "TNU"}
 CAMPOS_VALIDOS = {"tese", "ementa", "acordao", "sumula"}
 OBRIGATORIOS = ("origem_mcp", "tribunal", "tipo", "referencia", "campo", "trecho_verbatim")

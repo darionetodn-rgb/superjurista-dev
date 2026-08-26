@@ -11,8 +11,9 @@ ETAPAS = {
                     "pesquisa bnp concluída.", [], 300),
     "cjf":         ("-pesquisa-cjf.md", "# pesquisa cjf",
                     "pesquisa cjf concluída.", [], 300),
-    "julia":       ("-pesquisa-julia.md", "# pesquisa julia",
-                    "pesquisa julia concluída.", [], 300),
+    # adaptacao DN 06/08/2026: JULIA (TRF5) fora — o titular nao atua no TRF5; entra CARF
+    "carf":        ("-pesquisa-carf.md", "# pesquisa carf",
+                    "pesquisa carf concluída.", [], 300),
     "stj":         ("-pesquisa-stj.md", "# pesquisa stj",
                     "pesquisa stj concluída.", [], 300),
     "tnu":         ("-pesquisa-tnu.md", "# pesquisa tnu",

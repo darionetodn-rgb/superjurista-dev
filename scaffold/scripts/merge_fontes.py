@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """merge_fontes.py - Merge determinístico da cadeia de custódia de citações (v3.0).
 
-Os agentes de pesquisa (BNP, CJF, JULIA, triagem, STJ, TNU) gravam, cada um, um
+Os agentes de pesquisa (BNP, CJF, CARF, triagem, STJ, TNU) gravam, cada um, um
 parcial `fontes-<origem>.json` no workspace — nenhum agente escreve o arquivo
 final. Este script é o único responsável por produzir `$NUMERO-fontes.json`
 (Contrato C1), que `scripts/verificar_citacoes.py` usa como corpus autorizado
@@ -53,6 +53,12 @@ RE_CNJ = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
 #    substituto declarado e o CARF desde 29/07 (references/superjurista-pipeline.md).
 #    Conferido antes de tirar: nenhum corpus em disco tem item com essa origem.
 # Guarda mecanica: scripts/test_merge_fontes.py (o caso D reprova quem reintroduzir).
+# EXCECAO DECLARADA (27/08/2026): 4 destas origens sao nomes de SERVIDOR MCP
+# registrado; "pesquisa-stj" NAO e — a fonte STJ vem de um CONECTOR claude.ai
+# (mcp__claude_ai_PESQUISA_STJ__*), que nao aparece em mcpServers de config nenhum.
+# Renomear invalidaria corpus ja gravado em disco, entao a divergencia fica DECLARADA
+# aqui. Quem tiver um checker de origem x servidor registrado precisa admitir esta
+# excecao, ou ela reprova um corpus valido.
 ORIGENS_AUTORIZADAS = {"bnp-api", "carf-jurisprudencia", "cjf-jurisprudencia",
                         "pesquisa-stj", "tnu-eproc"}
 PREFIXOS = {"bnp-api": "BNP", "carf-jurisprudencia": "CARF",

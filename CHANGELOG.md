@@ -1,5 +1,41 @@
 # Changelog
 
+## 1.3.3 (2026-08-31)
+
+### Corrigido
+
+- **Os 4 defeitos do motor `verificar_pipeline.py`**, consertados no workspace em
+  27/08/2026 e até aqui ausentes do scaffold — o que significa que todo
+  `/instalar-superjurista` desde então distribuía o motor com eles:
+  - `RE_ACENTO` era cego a NFD: um documento inteiro e legítimo reprovava como "sem
+    acentos de português" só por estar decomposto. Nasceu `tem_acento()`, que normaliza
+    para NFC antes de procurar.
+  - `--etapa` combinado com `--etapas` ou `--gate` retornava antes e **o gate saía
+    "verde" sem nunca ter rodado**. Combinação inválida agora sai 2 (uso incorreto).
+  - as duas mensagens de marcador ausente não diziam que a checagem é uma **janela de
+    400 caracteres** — quem lia o erro procurava o defeito no lugar errado.
+- **`merge_fontes.py`**: o docstring ainda listava as origens como "BNP, CJF, **JULIA**",
+  fonte morta que a varredura JULIA→CARF de 26/08 não alcançou neste arquivo. Passou a
+  "BNP, CJF, CARF" e ganhou a exceção declarada do `pesquisa-stj`, que vem de conector
+  claude.ai e não de servidor MCP registrado.
+
+### Adicionado
+
+- **`scaffold/scripts/test_verificar_pipeline.py`** — a suíte do motor viaja junto com
+  ele a partir daqui (16 casos, verdes). O caso (iv) tem o **polo invertido** em relação
+  à cópia do workspace de origem, de propósito: aqui ele exige que o docstring ensine a
+  forma **portátil** e **proíbe** `py -3`, virando o guarda contra levar a adaptação de
+  uma máquina só para material distribuído.
+
+### Nota de processo
+
+Este bump nasce de uma linha de auditoria que mediu a divergência: o scaffold havia
+parado no commit `bc44a78` e os consertos posteriores não subiam. O gate que passa a
+vigiar isso vive no workspace de origem
+(`references/verificar_paridade_scaffold.py`), com manifesto de divergências legítimas
+declaradas — a adaptação de máquina (`py -3`) é uma delas e **não** deve ser propagada.
+As versões 1.3.1 e 1.3.2 não foram registradas neste arquivo na época.
+
 ## 1.3.0 (2026-07-11)
 
 ### Adicionado

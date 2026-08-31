@@ -60,6 +60,13 @@ RE_CNJ = re.compile(r"\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}")
 RE_ACENTO = re.compile(r"[áéíóúâêôãõàçÁÉÍÓÚÂÊÔÃÕÀÇ]")
 
 
+def tem_acento(texto):
+    """NFC antes de procurar: em NFD o "á" é "a"+U+0301 e a classe acima NÃO
+    casa — documento inteiro legítimo reprovava como "sem acentos de português"
+    (defeito medido no code review de 26/08/2026)."""
+    return bool(RE_ACENTO.search(unicodedata.normalize("NFC", texto)))
+
+
 def _norm(s):
     """minúsculo e sem acentos — âncora robusta a variação de acentuação/caixa."""
     s = unicodedata.normalize("NFD", s)
@@ -99,14 +106,19 @@ def verificar_etapa(workspace, identificador, etapa, etapas, carimbo=None):
     if len(texto) < minimo:
         problemas.append(f"curto demais ({len(texto)} chars < {minimo})")
     if _norm(inicio) not in n[:400]:
-        problemas.append(f"não abre com o marcador ({inicio!r})")
+        problemas.append(
+            f"marcador de abertura ausente nos PRIMEIROS 400 caracteres "
+            f"normalizados ({inicio!r}) — documento com preâmbulo longo pode "
+            f"ter o marcador DEPOIS da janela")
     fins = (fim,) if isinstance(fim, str) else tuple(fim)
     if not any(_norm(f) in n[-400:] for f in fins):
-        problemas.append(f"não fecha com nenhum marcador ({fins!r})")
+        problemas.append(
+            f"marcador de fechamento ausente nos ÚLTIMOS 400 caracteres "
+            f"normalizados ({fins!r})")
     for c in contem:
         if _norm(c) not in n:
             problemas.append(f"sem a seção obrigatória ({c!r})")
-    if not RE_ACENTO.search(texto):
+    if not tem_acento(texto):
         problemas.append("sem acentos de português (documento jurídico exige)")
     if carimbo and carimbo not in n:
         problemas.append(f"laudo de OUTRA minuta (sem o carimbo sha256 {carimbo})")
@@ -144,6 +156,14 @@ def rodar_cli(etapas, titulo="pipeline", inferir=inferir_id):
             print(f"[ERRO] --minuta não encontrada: {a.minuta}")
             sys.exit(2)
         carimbo = hashlib.sha256(open(a.minuta, "rb").read()).hexdigest()[:12]
+
+    # --etapa é EXCLUSIVO: combinado com --etapas/--gate, o ramo abaixo retornava
+    # antes e o gate saía "verde" sem nunca ter rodado (defeito medido no code
+    # review de 26/08/2026). Combinação inválida agora é uso incorreto, não falso verde.
+    if a.etapa and (a.etapas or a.gate):
+        print("[ERRO] --etapa é exclusivo: não combine com --etapas nem com --gate "
+              "(o gate não roda no modo etapa única)")
+        sys.exit(2)
 
     if a.etapa:
         r = verificar_etapa(a.workspace, identificador, a.etapa, etapas, carimbo)

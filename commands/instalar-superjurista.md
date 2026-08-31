@@ -44,6 +44,15 @@ allowed-tools: Bash Read Write AskUserQuestion Glob
     → Abortar instalação
   </se_permissao_negada>
 
+  <se_erro_de_escrita_depois_da_instalacao>
+    Sintoma, no Windows: a instalação termina OK, mas a primeira tentativa de EDITAR
+    um arquivo instalado (agente, command, script) falha — e a mensagem NÃO diz nada
+    sobre permissão. A causa quase sempre é o atributo ReadOnly herdado do scaffold
+    na cópia, e não uma permissão de pasta ou um arquivo em uso.
+    → Rodar o passo 3 da Fase 2 de novo: `chmod -R u+w .claude scripts`
+    → Só depois investigar permissão de diretório ou processo travado
+  </se_erro_de_escrita_depois_da_instalacao>
+
   <se_copia_parcial>
     Se cópia falhar no meio do processo:
     → Informar quais diretórios foram copiados com sucesso
@@ -143,12 +152,28 @@ allowed-tools: Bash Read Write AskUserQuestion Glob
            (A flag -n / --no-clobber impede sobrescrita de arquivos existentes)
          </se_modo_mesclar>
 
-      3. **Limpar artefatos de build copiados acidentalmente:**
+      3. **Deixar os arquivos copiados graváveis:**
+         ```bash
+         chmod -R u+w .claude scripts
+         ```
+         Obrigatório. No Windows, a cópia herda o atributo ReadOnly do scaffold e a
+         primeira sessão que tentar EDITAR um agente, command ou script instalado leva
+         um erro de escrita que **não menciona permissão** — o sintoma engana e cada
+         sessão paga o diagnóstico do zero (2 ocorrências medidas: 29/07 e 20/08/2026).
+
+         É `chmod`, e não `attrib`, de propósito. No Git Bash o `attrib -R .claude\*.*
+         /S /D` falha em três frentes ao mesmo tempo (medido em 31/08/2026): o shell
+         come a barra invertida, o MSYS converte `/S` e `/D` em caminhos, e o `attrib`
+         **sai 0 mesmo quando erra** — instalação verde com ReadOnly intacto. O `chmod
+         -R u+w` limpa o atributo ReadOnly no Windows, é recursivo por si, e em
+         Linux/macOS faz a coisa equivalente e correta.
+
+      4. **Limpar artefatos de build copiados acidentalmente:**
          ```bash
          find .claude/ -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
          ```
 
-      4. **Verificar sucesso:**
+      5. **Verificar sucesso:**
          Checar se os diretórios principais foram populados:
          ```bash
          ls .claude/commands/*.md > /dev/null 2>&1 && echo "commands OK" || echo "commands FALHOU"
@@ -157,10 +182,17 @@ allowed-tools: Bash Read Write AskUserQuestion Glob
          ls .claude/mcp-servers/tjsc-eproc/server.py > /dev/null 2>&1 && echo "mcp-servers OK" || echo "mcp-servers FALHOU"
          ls .claude/mcp-servers/tnu-eproc/server.py > /dev/null 2>&1 && echo "mcp tnu OK" || echo "mcp tnu FALHOU"
          ls scripts/verificar_pipeline.py > /dev/null 2>&1 && echo "scripts OK" || echo "scripts FALHOU"
+         [ -w scripts/verificar_pipeline.py ] && echo "gravavel OK" || echo "gravavel FALHOU"
          ```
          Se qualquer um falhou → reportar erro e parar
 
-      5. **Registrar os MCPs no `.mcp.json` da raiz (caminho absoluto):**
+         A linha `gravavel` prova que o passo 3 surtiu efeito. Sem ela o passo 3 é
+         obrigação sem verificação: se o comando falhar, a instalação termina dizendo
+         OK e o ReadOnly só aparece na primeira edição — que é justamente o sintoma
+         que este conserto existe para matar. `gravavel FALHOU` → rodar
+         `chmod -R u+w .claude scripts` de novo antes de seguir.
+
+      6. **Registrar os MCPs no `.mcp.json` da raiz (caminho absoluto):**
          Sem este registro os servidores NÃO carregam. NÃO usar settings.json — config
          de MCP ali é padrão antigo e falha silenciosamente. O merge abaixo é idempotente
          (preserva servidores já registrados pelo usuário):
